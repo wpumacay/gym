@@ -70,3 +70,43 @@ V = policy_evaluation( _envWrapper.env, _random_policy )
 plot_utils.plot_value_function( V )
 
 print( 'END PART 1 ***************************************' )
+
+print( 'PART2: Estimating Q(s,a) from V(s) ***************' )
+
+Q = np.zeros( [ _envWrapper.env.nS,
+                _envWrapper.env.nA ] )
+
+def compute_q_from_v( state, action, env, V, gamma ) :
+    q = 0.0
+    # call the one-step dynamics
+    _transitions = env.P[state][action]
+    for _prob, _nextS, _reward, _done in _transitions :
+        q += _prob * ( _reward + gamma * V[_nextS] )
+    
+    return q
+
+for s in range( _envWrapper.env.nS ) :
+    for a in range( _envWrapper.env.nA ) :
+        Q[s][a] = compute_q_from_v( s, a, _envWrapper.env, V, 1.0 )
+
+print( 'Estimated Q' )
+print( Q )
+print( 'Ground truth' )
+print( np.array( [[ 0.0147094  , 0.01393978 , 0.01393978 , 0.01317015],
+                  [ 0.00852356 , 0.01163091 , 0.0108613  , 0.01550788],
+                  [ 0.02444514 , 0.02095298 , 0.02406033 , 0.01435346],
+                  [ 0.01047649 , 0.01047649 , 0.00698432 , 0.01396865],
+                  [ 0.02166487 , 0.01701828 , 0.01624865 , 0.01006281],
+                  [ 0.         , 0.         , 0.         , 0.        ],
+                  [ 0.05433538 , 0.04735105 , 0.05433538 , 0.00698432],
+                  [ 0.         , 0.         , 0.         , 0.        ],
+                  [ 0.01701828 , 0.04099204 , 0.03480619 , 0.04640826],
+                  [ 0.07020885 , 0.11755991 , 0.10595784 , 0.05895312],
+                  [ 0.18940421 , 0.17582037 , 0.16001424 , 0.04297382],
+                  [ 0.         , 0.         , 0.         , 0.        ],
+                  [ 0.         , 0.         , 0.         , 0.        ],
+                  [ 0.08799677 , 0.20503718 , 0.23442716 , 0.17582037],
+                  [ 0.25238823 , 0.53837051 , 0.52711478 , 0.43929118],
+                  [ 0.         , 0.         , 0.         , 0.        ]] ) )
+
+print( 'END PART 1 ***************************************' )

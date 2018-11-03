@@ -38,3 +38,4 @@ tutorial/*.html
 vizdoom.ini
 
 .vscode/
+__pycache__/
