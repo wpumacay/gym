@@ -54,7 +54,7 @@ def policy_evaluation( env, policy, gamma=1, theta=1e-8 ):
             _error = max( _error, abs( _vNew - _vOld ) )
             
         if _error < theta :
-            print( 'Converged!' )
+            print( 'Converged> v-policy-eval' )
             break
     
     return V
@@ -144,7 +144,7 @@ def q_policy_evaluation( env, policy, gamma = 1, theta = 1e-8 ) :
                 _error = max( _error, np.abs( _qNew - _qOld ) )
             
         if _error < theta :
-            print( 'Converged' )
+            print( 'Converged> q-policy-eval' )
             break
     
     return Q
@@ -154,3 +154,99 @@ print( 'Q from bellman' )
 print( Q_bellman )
 
 print( 'END PART 2 ***************************************' )
+
+print( 'PART3: Policy Improvement ************************' )
+
+def policy_improvement( env, V, gamma ) :
+    policy = np.ones( [ env.nS, env.nA ] ) / env.nA
+    Q = np.zeros( [ env.nS, env.nA ] )
+
+    # compute Q and apply greedy improvement
+    for s in range( env.nS ) :
+        # compute Q
+        for a in range( env.nA ) :
+            Q[s][a] = compute_q_from_v( s, a, env, V, gamma )
+        # greedy improvement
+        _bestAction = np.argmax( Q[s] )
+        for a in range( env.nA ) :
+            policy[s][a] = 1.0 if a == _bestAction else 0.0
+    
+    return policy
+
+print( 'END PART 3 ***************************************' )
+
+print( 'PART4: Policy Iteration **************************' )
+
+def policy_iteration( env ) :
+    policy = np.ones( [ env.nS, env.nA ] ) / env.nA
+    V = np.zeros( env.nS )
+
+    while True :
+        V = policy_evaluation( env, policy, gamma = 1.0, theta = 1e-8 )
+        _improved_policy = policy_improvement( env, V, gamma = 1.0 )
+
+        if np.allclose( _improved_policy, policy ) :
+            print( 'Converged> policy-iteration' )
+            break
+
+        policy = _improved_policy
+
+    return policy, V
+
+# apply policy iteration
+_policy_pi, _V_pi = policy_iteration( _envWrapper.env )
+
+# show policy results
+print( "\nOptimal Policy (LEFT = 0, DOWN = 1, RIGHT = 2, UP = 3):" )
+print( _policy_pi,"\n" )
+
+# show value function results
+plot_utils.plot_value_function( _V_pi )
+
+print( 'END PART 4 ***************************************' )
+
+print( 'PART5: Policy Iteration **************************' )
+
+def truncated_policy_evaluation( env, policy, V, max_iterations, gamma ) :
+    _counter = 0
+    # out of place updates
+    _Vnew = np.zeros( env.nS )
+    while _counter < max_iterations :
+        for s in range( env.nS ) : 
+            # with Vnew instead of V in the function call it ...
+            # does not work (it needs way to many iters, as ...
+            # improving in each step, but starting from scratch every evaluation)
+            _Vnew[s] = bellman_expectation_backup( s, V, env, policy, gamma )
+        _counter += 1
+    return _Vnew
+
+def truncated_policy_iteration( env, max_iterations = 1, gamma = 1, theta = 1e-8 ) :
+    V = np.zeros( env.nS )
+    policy = np.ones( [ env.nS, env.nA ] ) / env.nA
+
+    while True :
+        # policy improvement
+        policy = policy_improvement( env, V, gamma )
+        # cache the current V
+        _Vold = V
+        # evaluate the current policy
+        V = truncated_policy_evaluation( env, policy, V, max_iterations, gamma )
+
+        # check for convergence with infinity norm
+        if np.max( np.abs( V - _Vold ) ) < theta :
+            print( 'Converged> truncated policy iteration' )
+            break
+    
+    return policy, V
+
+# apply truncated policy iteration
+_policy_tpi, _V_tpi = truncated_policy_iteration( _envWrapper.env, max_iterations = 2 )
+
+# show policy results
+print( "\nOptimal Policy (LEFT = 0, DOWN = 1, RIGHT = 2, UP = 3):" )
+print( _policy_tpi,"\n" )
+
+# show value function results
+plot_utils.plot_value_function( _V_tpi )
+
+print( 'END PART 5 ***************************************' )
