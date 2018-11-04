@@ -205,7 +205,7 @@ plot_utils.plot_value_function( _V_pi )
 
 print( 'END PART 4 ***************************************' )
 
-print( 'PART5: Policy Iteration **************************' )
+print( 'PART5: Truncated Policy Iteration **************************' )
 
 def truncated_policy_evaluation( env, policy, V, max_iterations, gamma ) :
     _counter = 0
@@ -250,3 +250,46 @@ print( _policy_tpi,"\n" )
 plot_utils.plot_value_function( _V_tpi )
 
 print( 'END PART 5 ***************************************' )
+
+print( 'PART6: Value Iteration ***************************' )
+
+def value_iteration(env, gamma=1, theta=1e-8):
+    V = np.zeros(env.nS)
+    
+    while True :
+        _verror = 0.0
+
+        for s in range( env.nS ) :
+            _vold = V[s]
+            _vs_candidates = []
+            
+            for a in range( env.nA ) :
+                _vcandidate = 0.0
+                _transitions = env.P[s][a]
+                for _ptransition, _nextS, _reward, _done in _transitions :
+                    _vcandidate += _ptransition * ( _reward + gamma * V[_nextS] )
+                _vs_candidates.append( _vcandidate )
+                
+            V[s] = max( _vs_candidates )
+            _verror = max( _verror, abs( _vold - V[s] ) )
+        
+        if _verror < theta : 
+            print( 'Converged> Value Iteration' )
+            break
+    
+    policy = policy_improvement( env, V, gamma )
+    
+    return policy, V
+
+# apply value iteration
+_policy_vi, _V_vi = value_iteration( _envWrapper.env )
+
+# show policy results
+print( "\nOptimal Policy (LEFT = 0, DOWN = 1, RIGHT = 2, UP = 3):" )
+print( _policy_vi,"\n" )
+
+# show the value function results
+plot_utils.plot_value_function( _V_vi )
+
+
+print( 'END PART 6 ***************************************' )
